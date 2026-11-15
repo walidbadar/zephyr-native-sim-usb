@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: 2026 Muhammad Waleed Badar
+# SPDX-License-Identifier: Apache-2.0
+
+config UDC_NATIVE_LINUX
+	bool "Native Linux USB device controller"
+	default y
+	depends on DT_HAS_ZEPHYR_NATIVE_POSIX_UDC_ENABLED || DT_HAS_ZEPHYR_NATIVE_LINUX_UDC_ENABLED
+	depends on ARCH_POSIX
+	depends on UDC_DRIVER
+	select NATIVE_USE_NSI_ERRNO
+	select NATIVE_SIMULATOR_PREFER_REAL_TIME
+	select UDC_DRIVER_HAS_HIGH_SPEED_SUPPORT
+	select UDC_WORKQUEUE
+	help
+	  USB device controller of native_sim (zephyr_udc0) backed by a USB
+	  device controller of the Linux host, through raw-gadget.
+
+if UDC_NATIVE_LINUX
+
+config UDC_NATIVE_LINUX_IRQ
+	int "Interrupt number of the native Linux USB device controller"
+	default 5
+	help
+	  Raised on a bus event and when a transfer is done, shared by all
+	  instances. Must differ from the other interrupts of the board, such
+	  as NSOS_IRQ.
+
+config UDC_NATIVE_LINUX_POLL_PERIOD
+	int "Poll period of the native Linux USB device controller"
+	default 250
+	range 1 1000000
+	help
+	  Simulated microseconds between checks for a bus event or a finished
+	  transfer. A value much shorter than the real time period
+	  (--rt-period) gains nothing.
+
+endif # UDC_NATIVE_LINUX

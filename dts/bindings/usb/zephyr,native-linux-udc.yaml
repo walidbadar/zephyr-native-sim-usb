@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: 2026 Muhammad Waleed Badar
+# SPDX-License-Identifier: Apache-2.0
+
+title: Native Linux USB device controller
+
+description: |
+  native_sim USB device controller backed by a USB device controller of the
+  Linux host, through raw-gadget (/dev/raw-gadget): a hardware one, which makes
+  the application a device on a USB cable, or dummy_hcd, which connects it to
+  the USB host stack of the same machine.
+
+  The driver serves the zephyr,native-posix-udc node of the board as well.
+  This compatible adds the choice of the host controller to it.
+
+  The endpoints are those of the host controller. The device is connected at
+  the speed of maximum-speed, high speed when not set, or at the one of the
+  USB host when that is slower.
+
+  The host controller answers SET_ADDRESS, GET_STATUS and the endpoint halt
+  requests itself, and sends the status of a control transfer with a data OUT
+  stage before the stack has seen the data, which can therefore not be
+  refused. Remote wakeup and start of frame events are not supported.
+
+compatible: "zephyr,native-linux-udc"
+
+include: usb-controller.yaml
+
+properties:
+  host-udc:
+    type: string
+    description: |
+      Host controller, by its name in /sys/class/udc, e.g. "dummy_udc.0".
+      The first one found is used when not set. Overridden by the --udc
+      command line option.
+
+examples:
+  - |
+      &zephyr_udc0 {
+        compatible = "zephyr,native-linux-udc";
+        host-udc = "dummy_udc.0";
+      };
