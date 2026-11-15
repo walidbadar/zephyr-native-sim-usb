@@ -8,6 +8,9 @@ Linux host through [raw-gadget](https://docs.kernel.org/usb/raw-gadget.html).
   application is a device on a USB cable.
 - With `dummy_hcd`, it is connected to the USB host stack of the same machine.
 
+It also has a [USB host controller](#usb-host-controller), which gives the USB
+host stack of Zephyr a USB device of the Linux host.
+
 The driver serves the `zephyr_udc0` node that the board already has, so the USB
 device samples of Zephyr build and run unchanged once the module is part of the
 build.
@@ -147,6 +150,49 @@ of the guest a full speed one.
   threads.
 - Tested with `dummy_hcd` only, on Linux 7.3: CDC ACM and mass storage, on a high
   speed and on a full speed USB host. `dummy_hcd` has no isochronous endpoints.
+
+## USB host controller
+
+The module also has a USB host controller for `native_sim`: the USB host stack
+of Zephyr gets one USB device of the Linux host, through usbfs. It needs read
+and write access to the node of the device in `/dev/bus/usb`, usually given by
+a udev rule, and no kernel module.
+
+```dts
+/ {
+	zephyr_uhc0: uhc {
+		compatible = "zephyr,native-linux-uhc";
+		host-device = "0483:374b";
+	};
+};
+```
+
+`host-device` is the device as `vendor:product` in hexadecimal or as its usbfs
+node, and `--uhc-device=<id>` replaces it at run time. `tests/uhc_native_linux`
+is the USB host shell on this controller:
+
+```sh
+west build -b native_sim/native/64 tests/uhc_native_linux
+./build/zephyr/zephyr.exe --uhc-device=0483:374b
+uart:~$ usbh init
+uart:~$ usbh enable
+uart:~$ usbh device info 1
+```
+
+- Linux has enumerated the device and keeps its address. The driver answers
+  `SET_ADDRESS` itself, does not pass a bus reset on and reports the device as
+  connected as soon as the controller is enabled.
+- `SET_CONFIGURATION` goes through usbfs and does nothing for the configuration
+  that is active. Another one is refused while kernel drivers use the device.
+- An interface is taken from its kernel driver when the first transfer is sent
+  to one of its endpoints, or the first control request to it, and all kernel
+  drivers are bound again when the controller is disabled or the application
+  exits. They are not when it is killed with `SIGKILL`.
+- Control, bulk and interrupt transfers. A control transfer blocks the
+  simulation until the device has answered. No isochronous transfers, no hubs
+  and no suspend.
+- Tested on Linux 7.3 with a J-Link probe: enumeration, bulk transfers on its
+  vendor interface and on a CDC ACM interface taken from `cdc_acm`.
 
 ## License
 

@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: 2026 Muhammad Waleed Badar
+# SPDX-License-Identifier: Apache-2.0
+
+title: Native Linux USB host controller
+
+description: |
+  native_sim USB host controller that gives the USB host stack one USB device
+  of the Linux host, through usbfs (/dev/bus/usb).
+
+  Linux has enumerated the device already and keeps its address: the driver
+  answers SET_ADDRESS itself, does not pass a bus reset on, and reports the
+  device as connected as soon as the controller is enabled. SET_CONFIGURATION
+  goes through usbfs and is a no-op for the configuration that is active.
+
+  The interface of an endpoint is taken from its kernel driver when the first
+  transfer is sent to it, and given back when the application exits.
+
+  Control, bulk and interrupt transfers are supported. A control transfer
+  blocks the simulation until the device has answered.
+
+compatible: "zephyr,native-linux-uhc"
+
+include: usb-controller.yaml
+
+properties:
+  host-device:
+    type: string
+    description: |
+      USB device of the host, as "vendor:product" in hexadecimal, e.g.
+      "0483:374b", or as its usbfs node, e.g. "/dev/bus/usb/001/004".
+      Overridden by the --uhc-device command line option.
+
+examples:
+  - |
+      / {
+        zephyr_uhc0: uhc {
+          compatible = "zephyr,native-linux-uhc";
+          host-device = "0483:374b";
+        };
+      };

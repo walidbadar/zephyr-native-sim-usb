@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 Muhammad Waleed Badar
+# SPDX-License-Identifier: Apache-2.0
+
+config UHC_NATIVE_LINUX
+	bool "Native Linux USB host controller"
+	default y
+	depends on DT_HAS_ZEPHYR_NATIVE_LINUX_UHC_ENABLED
+	depends on ARCH_POSIX
+	depends on UHC_DRIVER
+	select NATIVE_USE_NSI_ERRNO
+	select NATIVE_SIMULATOR_PREFER_REAL_TIME
+	help
+	  USB host controller of native_sim that gives the USB host stack one
+	  USB device of the Linux host, through usbfs.
